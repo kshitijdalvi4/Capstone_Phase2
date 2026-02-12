@@ -19,7 +19,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-const API_URL = 'http://localhost:8000';
+const API_URL = 'http://localhost:5001';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -51,10 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const response = await fetch(`${API_URL}/api/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
+      // Ensure these keys match the destructuring in your index.js
+      body: JSON.stringify({ name, email, password }), 
     });
+
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || 'Failed to sign up');
+
     setUser(data.user);
     localStorage.setItem('user', JSON.stringify(data.user));
     localStorage.setItem('token', data.token);

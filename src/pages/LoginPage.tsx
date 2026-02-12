@@ -32,6 +32,15 @@ const LoginPage: React.FC = () => {
         }
     };
 
+    const handleGoogleLogin = () => {
+    // Redirects directly to your Node.js backend
+        window.location.href = 'http://localhost:5001/api/auth/google';
+    };
+    
+    const handleGithubLogin = () => {
+        window.location.href = 'http://localhost:5001/api/auth/github';
+    };
+
     return (
         <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 relative overflow-hidden">
             {/* Background elements to match Landing Page */}
@@ -149,14 +158,16 @@ const LoginPage: React.FC = () => {
                         </div>
 
                         <div className="mt-6 flex gap-4">
-                            <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-white hover:bg-zinc-800 transition-colors">
+                            <button 
+                                onClick={handleGithubLogin}
+                                className="flex-1 flex items-center justify-center gap-2 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-white hover:bg-zinc-800 transition-colors">
                                 <Github className="w-5 h-5" />
                                 <span className="text-sm font-medium">GitHub</span>
-                            </button>
-                            <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-white hover:bg-zinc-800 transition-colors">
-                                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                    <path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.908 3.152-1.928 4.172-1.224 1.224-3.136 2.56-6.424 2.56-5.18 0-9.28-4.2-9.28-9.3s4.1-9.3 9.28-9.3c2.8 0 4.92 1.11 6.64 2.76l2.32-2.32c-2.12-2.12-5.32-3.76-8.96-3.76-7.04 0-12.8 5.76-12.8 12.8s5.76 12.8 12.8 12.8c3.84 0 6.74-1.26 9.06-3.6 2.4-2.4 3.16-5.74 3.16-8.36 0-.64-.06-1.24-.16-1.84h-12.06z" />
-                                </svg>
+                                </button>
+                            <button 
+                                onClick={handleGoogleLogin} 
+                                className="flex-1 flex items-center justify-center gap-2 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-white hover:bg-zinc-800 transition-colors">
+                                {/* Google Icon SVG */}
                                 <span className="text-sm font-medium">Google</span>
                             </button>
                         </div>

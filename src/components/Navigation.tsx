@@ -1,4 +1,3 @@
-import React from 'react';
 import { LogOut, Home, Bot, Zap } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -7,6 +6,16 @@ export default function Navigation() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleLogout = () => {
+    // Standard browser confirmation dialog
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    
+    if (confirmLogout) {
+      logout();
+      navigate('/login');
+    }
+  };
 
   return (
     <nav className="bg-zinc-900/50 backdrop-blur-md border-b border-zinc-800 px-6 py-4 sticky top-0 z-50">
@@ -72,7 +81,7 @@ export default function Navigation() {
           </div>
 
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="p-2.5 text-zinc-400 hover:text-rose-400 hover:bg-rose-400/10 rounded-xl transition-all duration-300"
             title="Logout"
           >
