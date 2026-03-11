@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
-from models import QueryRequest, QueryResponse, UserSignup, UserLogin, TokenResponse, UserResponse, CodeExecutionRequest, CodeExecutionResponse, TestCaseResult
+from models import QueryRequest, QueryResponse, UserSignup, UserLogin, TokenResponse, UserResponse, CodeExecutionRequest, CodeExecutionResponse, TestCaseResult, CodeAnalysisRequest, CodeAnalysisResponse
 from graph import app_graph
 from auth import create_user, get_user_by_email, verify_password, create_access_token
 from executor import PythonExecutor, CppExecutor, JavaExecutor
@@ -388,6 +388,29 @@ async def predict_success(request: PredictionRequest):
         confidence=result.get("confidence", "Low"),
         error=result.get("error")
     )
+
+# Code Analysis Endpoint
+from code_analysis_service import get_code_analysis
+
+@app.post("/api/analyze-code", response_model=CodeAnalysisResponse)
+async def analyze_code(request: CodeAnalysisRequest):
+    """Analyze user code against the optimal expected solution using Gemini."""
+    try:
+        insights = get_code_analysis(
+            user_code=request.code,
+            language=request.language,
+            problem_title=request.problem_title,
+            problem_description=request.problem_description,
+            optimal_time=request.optimal_time_complexity,
+            optimal_space=request.optimal_space_complexity
+        )
+        return CodeAnalysisResponse(success=True, insights=insights)
+    except Exception as e:
+        print(f"Error analyzing code: {e}")
+        return CodeAnalysisResponse(success=False, error=str(e), insights=[
+            "An error occurred during intelligent analysis.", 
+            "Please review the optimal solution details above."
+        ])
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=5002, reload=True)

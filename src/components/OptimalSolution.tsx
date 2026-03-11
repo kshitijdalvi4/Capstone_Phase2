@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { XCircle, Code2, BookOpen, RotateCcw, Zap, Target, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
@@ -11,6 +11,7 @@ interface OptimalSolutionProps {
   solutionWorked: boolean | null;
   executionError?: string | null;
   initialLanguage?: string;
+  userCode?: string;
 }
 
 export default function OptimalSolution({
@@ -18,10 +19,62 @@ export default function OptimalSolution({
   onSolutionFeedback,
   solutionWorked,
   executionError,
-  initialLanguage = 'python'
+  initialLanguage = 'python',
+  userCode
 }: OptimalSolutionProps) {
   const [language, setLanguage] = useState(initialLanguage);
   const { theme, fontSize } = useUserPreferences();
+  const [intelligenceInsights, setIntelligenceInsights] = useState<string[]>([]);
+  const [isLoadingInsights, setIsLoadingInsights] = useState(false);
+
+  // Fetch intelligence insights when the component mounts and we have userCode
+  useEffect(() => {
+    const fetchInsights = async () => {
+      if (!userCode || !problem) return;
+
+      setIsLoadingInsights(true);
+      try {
+        const response = await fetch('http://localhost:5002/api/analyze-code', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            code: userCode,
+            language: language,
+            problem_title: problem.title,
+            problem_description: problem.description,
+            optimal_time_complexity: problem.optimalTimeComplexity || problem.timeComplexity || 'O(n)',
+            optimal_space_complexity: problem.optimalSpaceComplexity || problem.spaceComplexity || 'O(n)'
+          })
+        });
+
+        const data = await response.json();
+        if (data.success && data.insights && data.insights.length > 0) {
+          setIntelligenceInsights(data.insights);
+        } else {
+          setIntelligenceInsights([
+            `Optimal Time Complexity: ${problem.optimalTimeComplexity || problem.timeComplexity || 'O(n)'} for efficient processing of input data.`,
+            `Optimal Space Complexity: ${problem.optimalSpaceComplexity || problem.spaceComplexity || 'O(n)'} to balance memory usage and performance.`,
+            "This solution uses industry-standard patterns to ensure reliability and scalability.",
+            "The implementation handles edge cases and large input sizes according to the problem constraints."
+          ]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch intelligence insights", err);
+        setIntelligenceInsights([
+          `Optimal Time Complexity: ${problem.optimalTimeComplexity || problem.timeComplexity || 'O(n)'} for efficient processing of input data.`,
+          `Optimal Space Complexity: ${problem.optimalSpaceComplexity || problem.spaceComplexity || 'O(n)'} to balance memory usage and performance.`,
+          "Could not generate dynamic analysis at this time.",
+          "Please review the optimal solution approaches above."
+        ]);
+      } finally {
+        setIsLoadingInsights(false);
+      }
+    };
+
+    fetchInsights();
+  }, [problem, userCode, language]);
 
   const languages = [
     { id: 'python', name: 'Python' },
@@ -286,24 +339,42 @@ export default function OptimalSolution({
         <section>
           <div className="flex items-center gap-3 mb-8">
             <div className="w-1.5 h-6 bg-emerald-600 rounded-full"></div>
-            <h3 className={`text-lg font-bold tracking-tight ${theme === 'vs-dark' ? 'text-white' : 'text-zinc-900'}`}>Intelligence Summary</h3>
+            <h3 className={`text-lg font-bold tracking-tight ${theme === 'vs-dark' ? 'text-white' : 'text-zinc-900'}`}>Intelligence Summary - Gemini Analysis</h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[
-              `Optimal Time Complexity: ${problem.optimalTimeComplexity || problem.timeComplexity || 'O(n)'} for efficient processing of input data.`,
-              `Optimal Space Complexity: ${problem.optimalSpaceComplexity || problem.spaceComplexity || 'O(n)'} to balance memory usage and performance.`,
-              "This solution uses industry-standard patterns to ensure reliability and scalability.",
-              "The implementation handles edge cases and large input sizes according to the problem constraints."
-            ].map((insight, idx) => (
-              <div key={idx} className={`p-5 rounded-2xl border flex gap-4 transition-colors ${theme === 'vs-dark' ? 'bg-zinc-900/40 border-white/5 hover:border-violet-500/20' : 'bg-white border-zinc-200 hover:border-violet-500/30 shadow-sm'
-                }`}>
-                <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${theme === 'vs-dark' ? 'bg-zinc-950' : 'bg-zinc-100'
-                  }`}>
-                  <span className="text-[10px] font-bold text-violet-500">{idx + 1}</span>
-                </div>
-                <p className="text-zinc-400 text-xs font-medium leading-relaxed">{insight}</p>
+            {isLoadingInsights ? (
+              <div className={`col-span-1 border sm:col-span-2 p-8 rounded-2xl flex flex-col items-center justify-center gap-4 transition-colors ${theme === 'vs-dark' ? 'bg-zinc-900/40 border-white/5' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                <div className="w-8 h-8 rounded-full border-t-2 border-r-2 border-violet-500 animate-spin"></div>
+                <p className="text-zinc-500 text-sm font-bold uppercase tracking-widest">Gemini is analyzing your code logic...</p>
               </div>
-            ))}
+            ) : intelligenceInsights.length > 0 ? (
+              intelligenceInsights.map((insight, idx) => (
+                <div key={idx} className={`p-5 rounded-2xl border flex gap-4 transition-colors ${theme === 'vs-dark' ? 'bg-zinc-900/40 border-white/5 hover:border-violet-500/20' : 'bg-white border-zinc-200 hover:border-violet-500/30 shadow-sm'
+                  }`}>
+                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${theme === 'vs-dark' ? 'bg-zinc-950' : 'bg-zinc-100'
+                    }`}>
+                    <span className="text-[10px] font-bold text-violet-500">{idx + 1}</span>
+                  </div>
+                  <p className="text-zinc-400 text-xs font-medium leading-relaxed">{insight}</p>
+                </div>
+              ))
+            ) : (
+              [
+                `Optimal Time Complexity: ${problem.optimalTimeComplexity || problem.timeComplexity || 'O(n)'} for efficient processing of input data.`,
+                `Optimal Space Complexity: ${problem.optimalSpaceComplexity || problem.spaceComplexity || 'O(n)'} to balance memory usage and performance.`,
+                "This solution uses industry-standard patterns to ensure reliability and scalability.",
+                "The implementation handles edge cases and large input sizes according to the problem constraints."
+              ].map((insight, idx) => (
+                <div key={idx} className={`p-5 rounded-2xl border flex gap-4 transition-colors ${theme === 'vs-dark' ? 'bg-zinc-900/40 border-white/5 hover:border-violet-500/20' : 'bg-white border-zinc-200 hover:border-violet-500/30 shadow-sm'
+                  }`}>
+                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${theme === 'vs-dark' ? 'bg-zinc-950' : 'bg-zinc-100'
+                    }`}>
+                    <span className="text-[10px] font-bold text-violet-500">{idx + 1}</span>
+                  </div>
+                  <p className="text-zinc-400 text-xs font-medium leading-relaxed">{insight}</p>
+                </div>
+              ))
+            )}
           </div>
         </section>
       </div>

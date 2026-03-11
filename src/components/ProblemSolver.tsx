@@ -638,6 +638,7 @@ export default function ProblemSolver() {
                       solutionWorked={solutionWorked}
                       executionError={executionError}
                       initialLanguage={language}
+                      userCode={code}
                     />
                   </motion.div>
 

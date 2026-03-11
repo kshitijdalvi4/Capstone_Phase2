@@ -75,3 +75,16 @@ class PredictionResponse(BaseModel):
     recommendation: str
     confidence: str
     error: Optional[str] = None
+
+class CodeAnalysisRequest(BaseModel):
+    code: str
+    language: str
+    problem_title: str
+    problem_description: str
+    optimal_time_complexity: str
+    optimal_space_complexity: str
+
+class CodeAnalysisResponse(BaseModel):
+    success: bool
+    insights: List[str] = []
+    error: Optional[str] = None
